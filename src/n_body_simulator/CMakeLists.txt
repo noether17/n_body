@@ -1,0 +1,1 @@
+add_executable(n_body_simulator n_body_simulator.cpp)
