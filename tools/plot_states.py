@@ -29,6 +29,9 @@ def plot_frame(t, states, ax):
     ax.clear()
     for point in current_frame:
         ax.scatter(point[0], point[1], point[2], marker=',', color='k', alpha=0.2)
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 10)
+    ax.set_zlim(0, 10)
     return ax
 
 if __name__ == "__main__":

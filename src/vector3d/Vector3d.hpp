@@ -1,7 +1,7 @@
 class Vector3d
 {
     public:
-    Vector3d(double x = 0.0, double y = 0.0, double z = 0.0)
+    explicit Vector3d(double x = 0.0, double y = 0.0, double z = 0.0)
         : x_{x}, y_{y}, z_{z} {}
 
     Vector3d(const Vector3d& v) = default;
@@ -55,6 +55,8 @@ class Vector3d
         auto w = *this;
         return w *= s;
     }
+
+    auto mag2() const -> double { return x_*x_ + y_*y_ + z_*z_; }
 
     private:
     double x_{};
