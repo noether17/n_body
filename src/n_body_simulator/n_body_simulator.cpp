@@ -27,6 +27,23 @@ void euler_step(std::vector<Vector3d>& pos, std::vector<Vector3d>& vel,
     for (auto i = 0; i < vel.size(); ++i) { vel[i] += acc[i]*dt; }
 }
 
+template <typename AccFunc>
+void leapfrog_step(std::vector<Vector3d>& pos, std::vector<Vector3d>& vel,
+    std::vector<Vector3d>& acc, double dt, AccFunc acc_func)
+{
+    acc_func(pos, acc);
+    for (auto i = 0; i < pos.size(); ++i)
+    {
+        pos[i] += vel[i]*dt + acc[i]*(0.5*dt*dt);
+        vel[i] += acc[i]*(0.5*dt);
+    }
+    acc_func(pos, acc);
+    for (auto i = 0; i < vel.size(); ++i)
+    {
+        vel[i] += acc[i]*(0.5*dt);
+    }
+}
+
 void gravity(const std::vector<Vector3d>& pos, std::vector<Vector3d>& acc);
 
 int main()
@@ -48,11 +65,12 @@ int main()
 
     // Euler integration
     auto acc = std::vector<Vector3d>(N);
-    constexpr auto dt = 1e3;
-    for (auto t_idx = 1; t_idx <= 100; ++t_idx)
+    constexpr auto dt = 1e2;
+    for (auto t_idx = 1; t_idx <= 1000; ++t_idx)
     {
         auto t = t_idx * dt;
-        euler_step(state.pos, state.vel, acc, dt, gravity);
+        //euler_step(state.pos, state.vel, acc, dt, gravity);
+        leapfrog_step(state.pos, state.vel, acc, dt, gravity);
         output_states(t, state, "output.txt");
     }
 
