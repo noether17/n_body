@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-constexpr auto N = 1 << 10; // number of particles
+constexpr auto N = 1 << 5; // number of particles
 constexpr auto dim = 3; // number of spatial dimensions
 constexpr auto L = 10.0; // box length
 
