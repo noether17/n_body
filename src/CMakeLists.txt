@@ -1,1 +1,2 @@
 add_subdirectory(n_body_simulator)
+add_subdirectory(vector3d)

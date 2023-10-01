@@ -1,0 +1,1 @@
+add_library(vector3d INTERFACE Vector3d.hpp)
