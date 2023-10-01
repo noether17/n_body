@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-constexpr auto N = 1 << 5; // number of particles
+constexpr auto N = 1 << 8; // number of particles
 constexpr auto dim = 3; // number of spatial dimensions
 constexpr auto L = 10.0; // box length
 
@@ -16,6 +16,17 @@ struct State
 };
 
 void output_states(double t, const State& state, const std::string& fn);
+
+template <typename AccFunc>
+void euler_step(std::vector<double>& pos, std::vector<double>& vel,
+    std::vector<double>& acc, double dt, AccFunc acc_func)
+{
+    acc_func(pos, acc);
+    for (auto i = 0; i < pos.size(); ++i) { pos[i] += vel[i]*dt; }
+    for (auto i = 0; i < vel.size(); ++i) { vel[i] += acc[i]*dt; }
+}
+
+void gravity(const std::vector<double>& pos, std::vector<double>& acc);
 
 int main()
 {
@@ -31,20 +42,13 @@ int main()
     // print states
     output_states(0.0, state, "output.txt");
 
-    // rotate around z-axis
-    constexpr auto theta = 2.0 * 3.14159265358979323 / 100.0;
-    auto cos_theta = std::cos(theta);
-    auto sin_theta = std::sin(theta);
+    // Euler integration
+    auto acc = std::vector<double>(dim*N);
+    constexpr auto dt = 1e3;
     for (auto t_idx = 1; t_idx <= 100; ++t_idx)
     {
-        auto t = t_idx * 0.1;
-        for (auto i = 0; i < N; ++i)
-        {
-            auto x = state.pos[3*i];
-            auto y = state.pos[3*i + 1];
-            state.pos[3*i] = cos_theta*x - sin_theta*y;
-            state.pos[3*i + 1] = sin_theta*x + cos_theta*y;
-        }
+        auto t = t_idx * dt;
+        euler_step(state.pos, state.vel, acc, dt, gravity);
         output_states(t, state, "output.txt");
     }
 
@@ -64,5 +68,29 @@ void output_states(double t, const State& state, const std::string& fn)
                     << state.vel[i*3] << ','
                     << state.vel[i*3 + 1] << ','
                     << state.vel[i*3 + 2] << '\n';
+    }
+}
+
+void gravity(const std::vector<double>& pos, std::vector<double>& acc)
+{
+    for (auto& a : acc) { a = 0.0; }
+    for (auto i = 0; i < pos.size() / dim; ++i)
+    {
+        for (auto j = i + 1; j < pos.size() / dim; ++j)
+        {
+            auto dx = pos[dim*j] - pos[dim*i];
+            auto dy = pos[dim*j + 1] - pos[dim*i + 1];
+            auto dz = pos[dim*j + 2] - pos[dim*i + 2];
+            auto r = std::sqrt(dx*dx + dy*dy + dz*dz);
+            auto r3 = r*r*r;
+            constexpr auto G = 6.67e-11;
+            auto factor = G / r3;
+            acc[dim*i] += dx*factor;
+            acc[dim*i + 1] += dy*factor;
+            acc[dim*i + 2] += dz*factor;
+            acc[dim*j] -= dx*factor;
+            acc[dim*j + 1] -= dy*factor;
+            acc[dim*j + 2] -= dz*factor;
+        }
     }
 }
