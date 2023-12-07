@@ -57,7 +57,7 @@ int main()
     auto dist = std::uniform_real_distribution<double>(L);
     for (auto& pos : state.pos)
     {
-        pos = Vector3d(dist(gen), dist(gen), dist(gen));
+        pos = Vector3d{dist(gen), dist(gen), dist(gen)};
     }
 
     // print states
@@ -84,12 +84,12 @@ void output_states(double t, const State& state, const std::string& fn)
     for (auto i = 0; i != state.pos.size(); ++i)
     {
         output_file << t << ','
-                    << state.pos[i].get_x() << ','
-                    << state.pos[i].get_y() << ','
-                    << state.pos[i].get_z() << ','
-                    << state.vel[i].get_x() << ','
-                    << state.vel[i].get_y() << ','
-                    << state.vel[i].get_z() << '\n';
+                    << state.pos[i].x << ','
+                    << state.pos[i].y << ','
+                    << state.pos[i].z << ','
+                    << state.vel[i].x << ','
+                    << state.vel[i].y << ','
+                    << state.vel[i].z << '\n';
     }
 }
 
@@ -101,7 +101,7 @@ void gravity(const std::vector<Vector3d>& pos, std::vector<Vector3d>& acc)
         for (auto j = i + 1; j < pos.size(); ++j)
         {
             auto dr = pos[j] - pos[i];
-            auto r = std::sqrt(dr.mag2());
+            auto r = mag(dr);
             auto r3 = r*r*r;
             constexpr auto G = 6.67e-11;
             auto factor = G / r3;
