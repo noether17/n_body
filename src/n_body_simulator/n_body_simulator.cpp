@@ -7,7 +7,7 @@
 
 #include "Vector3d.hpp"
 
-constexpr auto N = 1 << 8; // number of particles
+constexpr auto N = 1 << 10; // number of particles
 constexpr auto L = 10.0; // box length
 
 struct State
