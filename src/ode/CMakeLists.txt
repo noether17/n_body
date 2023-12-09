@@ -1,0 +1,1 @@
+add_library(ode INTERFACE ode.hpp)

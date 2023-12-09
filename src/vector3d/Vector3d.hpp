@@ -33,6 +33,15 @@ constexpr auto operator*=(Vector3d& v, double s) -> Vector3d&
     return v;
 }
 
+constexpr auto operator/=(Vector3d& v, double s) -> Vector3d&
+{
+    auto recip = 1.0 / s;
+    v.x *= recip;
+    v.y *= recip;
+    v.z *= recip;
+    return v;
+}
+
 constexpr auto operator+(const Vector3d& v, const Vector3d& w) -> Vector3d
 {
     auto u = v;
@@ -49,6 +58,12 @@ constexpr auto operator*(const Vector3d& v, double s) -> Vector3d
 {
     auto u = v;
     return u *= s;
+}
+
+constexpr auto operator/(const Vector3d& v, double s) -> Vector3d
+{
+    auto u = v;
+    return u /= s;
 }
 
 constexpr auto operator*(double s, const Vector3d& v) -> Vector3d
