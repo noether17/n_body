@@ -49,6 +49,7 @@ void threaded_euler_loop(ThreadData data, double max_time, AccFunc acc_func,
 {
     auto t = 0.0;
     auto local_out_states = out_states;
+    local_out_states.reserve(data.vel.size()*max_time/data.dt);
     while (t < max_time)
     {
         threaded_euler_step(data, acc_func, barrier);
