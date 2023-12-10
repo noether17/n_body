@@ -7,11 +7,13 @@
 
 auto N = 1 << 3; // number of particles
 auto n_threads = 1 << 2; // number of threads
+auto output_to_file = false;
 
 int main(int argc, char** argv)
 {
     if (argc > 1) { N = std::stoi(argv[1]); }
     if (argc > 2) { n_threads = std::stoi(argv[2]); }
+    if (argc > 3) { output_to_file = std::stoi(argv[3]); }
 
     // initialize state
     auto state = State{};
@@ -28,7 +30,10 @@ int main(int argc, char** argv)
     // simulate
     auto max_time = characteristic_time(N, L);
     auto dt = 1e-3*max_time;
-    threaded_euler(state, dt, max_time, n_threads);
+    auto thread_output_vecs = threaded_euler(state, dt, max_time, n_threads);
+
+    // output results
+    if (output_to_file) { output_results(N, n_threads, thread_output_vecs); }
 
     return 0;
 }

@@ -76,9 +76,7 @@ auto generate_filename(int system_size, int n_threads) -> std::string
     return filename.str();
 }
 
-void output_results(std::size_t system_size, int n_threads, std::vector<std::vector<OutputEntry>, std::allocator<std::vector<OutputEntry>>> &thread_output_vecs);
-
-void threaded_euler(State &state, double dt, double max_time, int n_threads)
+auto threaded_euler(State &state, double dt, double max_time, int n_threads)
 {
     auto pos = std::span<Vector3d>{state.pos};
     auto system_size = pos.size();
@@ -104,7 +102,7 @@ void threaded_euler(State &state, double dt, double max_time, int n_threads)
     }
     for (auto& thread : threads) { thread.join(); }
 
-    output_results(system_size, n_threads, thread_output_vecs);
+    return thread_output_vecs;
 }
 
 void output_results(std::size_t system_size, int n_threads,
