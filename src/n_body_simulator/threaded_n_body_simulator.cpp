@@ -5,10 +5,14 @@
 #include "physics.hpp"
 #include "Vector3d.hpp"
 
-constexpr auto N = 1 << 3; // number of particles
+auto N = 1 << 3; // number of particles
+auto n_threads = 1 << 2; // number of threads
 
-int main()
+int main(int argc, char** argv)
 {
+    if (argc > 1) { N = std::stoi(argv[1]); }
+    if (argc > 2) { n_threads = std::stoi(argv[2]); }
+
     // initialize state
     auto state = State{};
     state.pos = std::vector<Vector3d>(N);
@@ -23,8 +27,8 @@ int main()
 
     // simulate
     auto max_time = characteristic_time(N, L);
-    auto dt = 1e-1*max_time;
-    threaded_euler(state, dt, max_time, 4);
+    auto dt = 1e-3*max_time;
+    threaded_euler(state, dt, max_time, n_threads);
 
     return 0;
 }

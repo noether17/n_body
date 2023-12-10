@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <barrier>
 #include <chrono>
 #include <fstream>
@@ -75,7 +76,9 @@ auto generate_filename(int system_size, int n_threads) -> std::string
     return filename.str();
 }
 
-void threaded_euler(State& state, double dt, double max_time, int n_threads)
+void output_results(std::size_t system_size, int n_threads, std::vector<std::vector<OutputEntry>, std::allocator<std::vector<OutputEntry>>> &thread_output_vecs);
+
+void threaded_euler(State &state, double dt, double max_time, int n_threads)
 {
     auto pos = std::span<Vector3d>{state.pos};
     auto system_size = pos.size();
@@ -101,20 +104,33 @@ void threaded_euler(State& state, double dt, double max_time, int n_threads)
     }
     for (auto& thread : threads) { thread.join(); }
 
+    output_results(system_size, n_threads, thread_output_vecs);
+}
+
+void output_results(std::size_t system_size, int n_threads,
+    std::vector<std::vector<OutputEntry>>& thread_output_vecs)
+{
+    auto output_vector = std::vector<OutputEntry>{};
+    for (auto& thread_output : thread_output_vecs)
+    {
+        output_vector.insert(output_vector.end(), thread_output.begin(), thread_output.end());
+    }
+    std::sort(output_vector.begin(), output_vector.end(),
+        [](const auto& a, const auto& b) { return a.index < b.index; });
+    std::stable_sort(output_vector.begin(), output_vector.end(),
+        [](const auto& a, const auto& b) { return a.t < b.t; });
+
     auto filename = generate_filename(system_size, n_threads);
     auto out = std::ofstream{filename};
-    for (auto& thread_states : thread_output_vecs)
+    for (const auto& entry : output_vector)
     {
-        for (auto& state : thread_states)
-        {
-            out << state.t << ','
-                << state.index << ','
-                << state.pos.x << ','
-                << state.pos.y << ','
-                << state.pos.z << ','
-                << state.vel.x << ','
-                << state.vel.y << ','
-                << state.vel.z << '\n';
-        }
+        out << entry.t << ','
+            << entry.index << ','
+            << entry.pos.x << ','
+            << entry.pos.y << ','
+            << entry.pos.z << ','
+            << entry.vel.x << ','
+            << entry.vel.y << ','
+            << entry.vel.z << '\n';
     }
 }
