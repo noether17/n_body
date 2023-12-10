@@ -32,13 +32,13 @@ void leapfrog_step(std::vector<Vector3d>& pos, std::vector<Vector3d>& vel,
     std::vector<Vector3d>& acc, double dt, AccFunc acc_func)
 {
     acc_func(pos, acc);
-    for (auto i = 0; i < pos.size(); ++i)
+    for (std::size_t i = 0; i < pos.size(); ++i)
     {
         pos[i] += vel[i]*dt + acc[i]*(0.5*dt*dt);
         vel[i] += acc[i]*(0.5*dt);
     }
     acc_func(pos, acc);
-    for (auto i = 0; i < vel.size(); ++i)
+    for (std::size_t i = 0; i < vel.size(); ++i)
     {
         vel[i] += acc[i]*(0.5*dt);
     }
@@ -81,7 +81,7 @@ void output_states(double t, const State& state, const std::string& fn)
 {
     auto output_file = std::ofstream{fn, std::ios_base::app};
     output_file << std::setprecision(16);
-    for (auto i = 0; i != state.pos.size(); ++i)
+    for (std::size_t i = 0; i != state.pos.size(); ++i)
     {
         output_file << t << ','
                     << state.pos[i].x << ','
@@ -96,7 +96,7 @@ void output_states(double t, const State& state, const std::string& fn)
 void gravity(const std::vector<Vector3d>& pos, std::vector<Vector3d>& acc)
 {
     for (auto& a : acc) { a = Vector3d{}; }
-    for (auto i = 0; i < pos.size(); ++i)
+    for (std::size_t i = 0; i < pos.size(); ++i)
     {
         for (auto j = i + 1; j < pos.size(); ++j)
         {

@@ -23,15 +23,15 @@ struct State
 
 // Assumes that this is called from a thread computing a portion of the accelerations,
 // identified by the offset and the size of the portion.
-void threaded_gravity(const std::span<const Vector3d> pos, int offset, std::span<Vector3d> acc)
+void threaded_gravity(const std::span<const Vector3d> pos, std::size_t offset, std::span<Vector3d> acc)
 {
     for (auto acc_index = offset; acc_index < offset + acc.size(); ++acc_index)
     {
         // acc_index is the index among the full system of the particle whose acceleration is being
         // computed.
-        auto current_acc = acc[acc_index - offset];
+        auto& current_acc = acc[acc_index - offset];
         current_acc = Vector3d{};
-        for (auto pos_index = 0; pos_index < pos.size(); ++pos_index)
+        for (std::size_t pos_index = 0; pos_index < pos.size(); ++pos_index)
         {
             if (acc_index == pos_index) { continue; }
             auto r = pos[pos_index] - pos[acc_index];

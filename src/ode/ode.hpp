@@ -32,8 +32,8 @@ void threaded_euler_step(ThreadData& data, AccFunc acc_func,
     acc_func(data.pos, data.offset, data.acc);
     barrier.arrive_and_wait();
     auto thread_size = data.vel.size();
-    for (auto i = 0; i < thread_size; ++i) { data.pos[i + data.offset] += data.vel[i]*data.dt; }
-    for (auto i = 0; i < thread_size; ++i) { data.vel[i] += data.acc[i]*data.dt; }
+    for (std::size_t i = 0; i < thread_size; ++i) { data.pos[i + data.offset] += data.vel[i]*data.dt; }
+    for (std::size_t i = 0; i < thread_size; ++i) { data.vel[i] += data.acc[i]*data.dt; }
 }
 
 struct OutputEntry
