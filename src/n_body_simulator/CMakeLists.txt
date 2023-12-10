@@ -1,8 +1,4 @@
-add_executable(n_body_simulator n_body_simulator.cpp)
 add_executable(threaded_n_body_simulator threaded_n_body_simulator.cpp)
-
-target_link_libraries(n_body_simulator vector3d)
-target_include_directories(n_body_simulator PUBLIC ${CMAKE_SOURCE_DIR}/src/vector3d)
 
 target_link_libraries(threaded_n_body_simulator vector3d)
 target_include_directories(threaded_n_body_simulator PUBLIC ${CMAKE_SOURCE_DIR}/src/vector3d)
