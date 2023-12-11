@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(NBody CXX)
+project(NBody CXX CUDA)
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
@@ -7,4 +7,5 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Werror")
+set(CMAKE_CUDA_ARCHITECTURES OFF)
 add_subdirectory(src)
