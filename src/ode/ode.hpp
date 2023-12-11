@@ -69,10 +69,8 @@ void threaded_euler_loop(ThreadData data, double max_time, AccFunc acc_func,
 
 auto generate_filename(int system_size, int n_threads) -> std::string
 {
-    auto now = std::chrono::system_clock::now();
-    auto now_c = std::chrono::system_clock::to_time_t(now);
     auto filename = std::stringstream{};
-    filename << "output_" << system_size << '_' << n_threads << '_' << now_c << ".csv";
+    filename << "output_" << system_size << '_' << n_threads << ".csv";
     return filename.str();
 }
 
