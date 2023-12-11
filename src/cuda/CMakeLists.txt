@@ -1,1 +1,2 @@
 add_executable(helloworld helloworld.cu)
+add_executable(cuda_n_body_simulator n_body_simulator.cu)
