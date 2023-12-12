@@ -18,9 +18,6 @@ __global__ void update_acceleration(Vector3d* acc, Vector3d* pos, int n)
     int i = blockIdx.x*blockDim.x + threadIdx.x;
     if (i < n)
     {
-        double ax = 0.0;
-        double ay = 0.0;
-        double az = 0.0;
         for (int j = 0; j < n; ++j)
         {
             if (i != j)
@@ -30,14 +27,11 @@ __global__ void update_acceleration(Vector3d* acc, Vector3d* pos, int n)
                 double dz = pos[j].z - pos[i].z;
                 double r2 = dx*dx + dy*dy + dz*dz;
                 double denominator = (r2 + softening2)*sqrt(r2);
-                ax += dx / denominator;
-                ay += dy / denominator;
-                az += dz / denominator;
+                acc[i].x += G*dx / denominator;
+                acc[i].y += G*dy / denominator;
+                acc[i].z += G*dz / denominator;
             }
         }
-        acc[i].x = G*ax;
-        acc[i].y = G*ay;
-        acc[i].z = G*az;
     }
 }
 
@@ -64,18 +58,38 @@ struct OutputEntry
 };
 
 __global__ void output_states(OutputEntry* out_states, Vector3d* pos, Vector3d* vel, int n,
-    size_t step_index, double t)
+    int step_index, double t)
 {
     int i = blockIdx.x*blockDim.x + threadIdx.x;
     int step_offset = step_index*n;
     if (i < n)
     {
         out_states[step_offset + i].t = t;
-        out_states[step_offset + i].index = i;
-        out_states[step_offset + i].pos = pos[i];
-        out_states[step_offset + i].vel = vel[i];
+        out_states[step_offset + i].index = (size_t)i;
+        out_states[step_offset + i].pos.x = pos[i].x;
+        out_states[step_offset + i].pos.y = pos[i].y;
+        out_states[step_offset + i].pos.z = pos[i].z;
+        out_states[step_offset + i].vel.x = vel[i].x;
+        out_states[step_offset + i].vel.y = vel[i].y;
+        out_states[step_offset + i].vel.z = vel[i].z;
     }
 }
+
+//__global__ void print_output_states(OutputEntry* out_states, int n, int n_steps)
+//{
+//    int i = blockIdx.x*blockDim.x + threadIdx.x;
+//    if (i < n)
+//    {
+//        for (int j = 0; j < n_steps; ++j)
+//        {
+//            OutputEntry* entry = &out_states[j*n + i];
+//            printf("i = %d, t = %.16e, index = %lu, pos.x = %.16e, pos.y = %.16e, pos.z = %.16e, vel.x = %.16e, vel.y = %.16e, vel.z = %.16e\n",
+//                i, entry->t, entry->index,
+//                entry->pos.x, entry->pos.y, entry->pos.z,
+//                entry->vel.x, entry->vel.y, entry->vel.z);
+//        }
+//    }
+//}
 
 void cuda_euler_loop(Vector3d* pos, Vector3d* vel, int n, double dt, double max_time,
     OutputEntry** out_states, size_t* out_nstates)
@@ -88,18 +102,21 @@ void cuda_euler_loop(Vector3d* pos, Vector3d* vel, int n, double dt, double max_
     cudaMalloc(&d_acc, n*sizeof(Vector3d));
     cudaMemcpy(d_pos, pos, n*sizeof(Vector3d), cudaMemcpyHostToDevice);
     cudaMemcpy(d_vel, vel, n*sizeof(Vector3d), cudaMemcpyHostToDevice);
-    int n_reserve_steps = (int)(max_time / dt + 1.0);
+    int n_reserve_steps = (int)(max_time / dt) * 2;
     OutputEntry* d_out_states;
     cudaMalloc(&d_out_states, n_reserve_steps*n*sizeof(OutputEntry));
     int block_size = 256;
     int num_blocks = (n + block_size - 1) / block_size;
     int n_steps = 0;
-    for (double t = 0.0; t < max_time; ++t)
+    for (double t = 0.0; t < max_time; t += dt)
     {
         update_acceleration<<<num_blocks, block_size>>>(d_acc, d_pos, n);
+        cudaDeviceSynchronize();
         update_state<<<num_blocks, block_size>>>(d_pos, d_vel, d_acc, dt, n);
+        cudaDeviceSynchronize();
 
         output_states<<<num_blocks, block_size>>>(d_out_states, d_pos, d_vel, n, n_steps, t);
+        cudaDeviceSynchronize();
         ++n_steps;
     }
     OutputEntry* out_states_host = (OutputEntry*)malloc(n_steps*n*sizeof(OutputEntry));
@@ -121,7 +138,7 @@ void output_results(const char* filename, OutputEntry* out_states, size_t nstate
     for (size_t i = 0; i < nstates; ++i)
     {
         OutputEntry* entry = &out_states[i];
-        fprintf(fp, "%f,%zu,%f,%f,%f,%f,%f,%f\n",
+        fprintf(fp, "%lf,%lu,%lf,%lf,%lf,%lf,%lf,%lf\n",
             entry->t, entry->index,
             entry->pos.x, entry->pos.y, entry->pos.z,
             entry->vel.x, entry->vel.y, entry->vel.z);
@@ -156,7 +173,9 @@ int main(int argc, char** argv)
     cuda_euler_loop(pos, vel, N, dt, max_time, &out_states, &nstates);
 
     // output results
-    output_results("nbody_cuda.csv", out_states, nstates);
+    char filename[256];
+    sprintf(filename, "cudaoutput_%d_.csv", N);
+    output_results(filename, out_states, nstates);
 
     // free state
     free(pos);
