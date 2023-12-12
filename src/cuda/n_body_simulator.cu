@@ -144,10 +144,12 @@ void output_results(const char* filename, OutputEntry* out_states, size_t nstate
 }
 
 int N = 1 << 3;
+int output_to_file = 0;
 
 int main(int argc, char** argv)
 {
     if (argc > 1) { N = atoi(argv[1]); }
+    if (argc > 2) { output_to_file = atoi(argv[2]); }
 
     // initialize state
     Vector3d* pos = (Vector3d*)malloc(N*sizeof(Vector3d));
@@ -170,9 +172,12 @@ int main(int argc, char** argv)
     cuda_euler_loop(pos, vel, N, dt, max_time, &out_states, &nstates);
 
     // output results
-    char filename[256];
-    sprintf(filename, "cudaoutput_%d_.csv", N);
-    output_results(filename, out_states, nstates);
+    if (output_to_file)
+    {
+        char filename[256];
+        sprintf(filename, "cudaoutput_%d_.csv", N);
+        output_results(filename, out_states, nstates);
+    }
     free(out_states);
 
     // free state
