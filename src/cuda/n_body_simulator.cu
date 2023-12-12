@@ -111,12 +111,9 @@ void cuda_euler_loop(Vector3d* pos, Vector3d* vel, int n, double dt, double max_
     for (double t = 0.0; t < max_time; t += dt)
     {
         update_acceleration<<<num_blocks, block_size>>>(d_acc, d_pos, n);
-        cudaDeviceSynchronize();
         update_state<<<num_blocks, block_size>>>(d_pos, d_vel, d_acc, dt, n);
-        cudaDeviceSynchronize();
 
         output_states<<<num_blocks, block_size>>>(d_out_states, d_pos, d_vel, n, n_steps, t);
-        cudaDeviceSynchronize();
         ++n_steps;
     }
     OutputEntry* out_states_host = (OutputEntry*)malloc(n_steps*n*sizeof(OutputEntry));
@@ -176,6 +173,7 @@ int main(int argc, char** argv)
     char filename[256];
     sprintf(filename, "cudaoutput_%d_.csv", N);
     output_results(filename, out_states, nstates);
+    free(out_states);
 
     // free state
     free(pos);
