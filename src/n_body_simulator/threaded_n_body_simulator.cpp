@@ -1,3 +1,6 @@
+#include "sys/time.h"
+
+#include <iostream>
 #include <random>
 #include <vector>
 
@@ -30,7 +33,13 @@ int main(int argc, char** argv)
     // simulate
     auto max_time = characteristic_time(N, L);
     auto dt = 1e-3*max_time;
+    struct timeval start;
+    gettimeofday(&start, NULL);
     auto thread_output_vecs = threaded_euler(state, dt, max_time, n_threads);
+    struct timeval end;
+    gettimeofday(&end, NULL);
+    double execution_time = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) * 1e-6;
+    std::cout << "N: " << N << ", n_threads: " << n_threads << ", execution_time: " << execution_time << "s\n";
 
     // output results
     if (output_to_file) { output_results(N, n_threads, thread_output_vecs); }
