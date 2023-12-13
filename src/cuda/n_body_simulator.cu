@@ -1,5 +1,6 @@
 #include "stdlib.h"
 #include "stdio.h"
+#include "sys/time.h"
 
 const double G = 6.67408e-11; // gravitational constant in m^3 kg^-1 s^-2
 const double L = 1.0; // box width in m
@@ -91,7 +92,7 @@ __global__ void output_states(OutputEntry* out_states, Vector3d* pos, Vector3d* 
 //    }
 //}
 
-void cuda_euler_loop(Vector3d* pos, Vector3d* vel, int n, double dt, double max_time,
+double cuda_euler_loop(Vector3d* pos, Vector3d* vel, int n, double dt, double max_time,
     OutputEntry** out_states, size_t* out_nstates)
 {
     Vector3d* d_pos;
@@ -108,6 +109,8 @@ void cuda_euler_loop(Vector3d* pos, Vector3d* vel, int n, double dt, double max_
     int block_size = 256;
     int num_blocks = (n + block_size - 1) / block_size;
     int n_steps = 0;
+    struct timeval start;
+    gettimeofday(&start, NULL);
     for (double t = 0.0; t < max_time; t += dt)
     {
         update_acceleration<<<num_blocks, block_size>>>(d_acc, d_pos, n);
@@ -116,6 +119,9 @@ void cuda_euler_loop(Vector3d* pos, Vector3d* vel, int n, double dt, double max_
         output_states<<<num_blocks, block_size>>>(d_out_states, d_pos, d_vel, n, n_steps, t);
         ++n_steps;
     }
+    struct timeval end;
+    gettimeofday(&end, NULL);
+    double elapsed_time = (end.tv_sec - start.tv_sec) + 1e-6*(end.tv_usec - start.tv_usec);
     OutputEntry* out_states_host = (OutputEntry*)malloc(n_steps*n*sizeof(OutputEntry));
     cudaMemcpy(out_states_host, d_out_states, n_steps*n*sizeof(OutputEntry), cudaMemcpyDeviceToHost);
     cudaMemcpy(pos, d_pos, n*sizeof(Vector3d), cudaMemcpyDeviceToHost);
@@ -127,6 +133,8 @@ void cuda_euler_loop(Vector3d* pos, Vector3d* vel, int n, double dt, double max_
 
     *out_states = out_states_host;
     *out_nstates = n_steps*n;
+
+    return elapsed_time;
 }
 
 void output_results(const char* filename, OutputEntry* out_states, size_t nstates)
@@ -169,7 +177,13 @@ int main(int argc, char** argv)
     double dt = 1e-3*max_time;
     OutputEntry* out_states;
     size_t nstates;
-    cuda_euler_loop(pos, vel, N, dt, max_time, &out_states, &nstates);
+    struct timeval start;
+    gettimeofday(&start, NULL);
+    double time_on_gpu = cuda_euler_loop(pos, vel, N, dt, max_time, &out_states, &nstates);
+    struct timeval end;
+    gettimeofday(&end, NULL);
+    double total_seconds = (end.tv_sec - start.tv_sec) + 1e-6*(end.tv_usec - start.tv_usec);
+    printf("N = %d, time on GPU = %lfs, total time = %lfs\n", N, time_on_gpu, total_seconds);
 
     // output results
     if (output_to_file)
