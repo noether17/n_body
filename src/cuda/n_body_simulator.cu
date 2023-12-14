@@ -93,7 +93,7 @@ __global__ void output_states(OutputEntry* out_states, Vector3d* pos, Vector3d* 
 //}
 
 double cuda_euler_loop(Vector3d* pos, Vector3d* vel, int n, double dt, double max_time,
-    OutputEntry** out_states, size_t* out_nstates)
+    OutputEntry** out_states, size_t* out_nstates, int block_size)
 {
     Vector3d* d_pos;
     Vector3d* d_vel;
@@ -106,7 +106,6 @@ double cuda_euler_loop(Vector3d* pos, Vector3d* vel, int n, double dt, double ma
     int n_reserve_steps = (int)(max_time / dt) * 2;
     OutputEntry* d_out_states;
     cudaMalloc(&d_out_states, n_reserve_steps*n*sizeof(OutputEntry));
-    int block_size = 256;
     int num_blocks = (n + block_size - 1) / block_size;
     int n_steps = 0;
     struct timeval start;
@@ -152,12 +151,14 @@ void output_results(const char* filename, OutputEntry* out_states, size_t nstate
 }
 
 int N = 1 << 3;
+int block_size = 1 << 8;
 int output_to_file = 0;
 
 int main(int argc, char** argv)
 {
     if (argc > 1) { N = atoi(argv[1]); }
-    if (argc > 2) { output_to_file = atoi(argv[2]); }
+    if (argc > 2) { block_size = atoi(argv[2]); }
+    if (argc > 3) { output_to_file = atoi(argv[3]); }
 
     // initialize state
     Vector3d* pos = (Vector3d*)malloc(N*sizeof(Vector3d));
@@ -179,7 +180,7 @@ int main(int argc, char** argv)
     size_t nstates;
     struct timeval start;
     gettimeofday(&start, NULL);
-    double time_on_gpu = cuda_euler_loop(pos, vel, N, dt, max_time, &out_states, &nstates);
+    double time_on_gpu = cuda_euler_loop(pos, vel, N, dt, max_time, &out_states, &nstates, block_size);
     struct timeval end;
     gettimeofday(&end, NULL);
     double total_seconds = (end.tv_sec - start.tv_sec) + 1e-6*(end.tv_usec - start.tv_usec);
@@ -189,7 +190,7 @@ int main(int argc, char** argv)
     if (output_to_file)
     {
         char filename[256];
-        sprintf(filename, "cudaoutput_%d_.csv", N);
+        sprintf(filename, "cudaoutput_%d_%d.csv", N, block_size);
         output_results(filename, out_states, nstates);
     }
     free(out_states);
